@@ -1,0 +1,37 @@
+{
+ "meta": { "generated": "fixture for tests/test_decode.cpp" },
+ "structs": {
+  "_fix_a_zocl":   { "size": 8, "resolved": true, "var": false, "source": "fixture", "fields": [
+    { "name": "dwA", "type": "uint32_t", "count": 1, "offset": 0, "size": 4, "resolved": true },
+    { "name": "wB",  "type": "uint16_t", "count": 1, "offset": 4, "size": 2, "resolved": true },
+    { "name": "zC",  "type": "int16_t",  "count": 1, "offset": 6, "size": 2, "resolved": true } ] },
+  "_fix_b_zocl":   { "size": 2, "resolved": true, "var": false, "source": "fixture", "fields": [
+    { "name": "wHP", "type": "uint16_t", "count": 1, "offset": 0, "size": 2, "resolved": true } ] },
+  "_fix_var_zocl": { "size": 20, "resolved": true, "var": true, "source": "fixture", "fields": [
+    { "name": "byNum",  "type": "uint8_t", "count": 1,  "offset": 0, "size": 1,  "resolved": true },
+    { "name": "szText", "type": "char",    "count": 19, "offset": 1, "size": 19, "resolved": true } ] },
+  "_fix_nest_zocl": { "size": 12, "resolved": true, "var": false, "source": "fixture", "fields": [
+    { "name": "byRet", "type": "uint8_t", "count": 1, "offset": 0, "size": 1, "resolved": true },
+    { "name": "List",  "type": "_item",   "count": 2, "offset": 2, "size": 8, "resolved": true,
+      "struct": "_fix_nest_zocl::_item" } ] },
+  "_fix_nest_zocl::_item": { "size": 4, "resolved": true, "var": false, "source": "fixture", "fields": [
+    { "name": "wIndex", "type": "uint16_t", "count": 1, "offset": 0, "size": 2, "resolved": true },
+    { "name": "wNum",   "type": "uint16_t", "count": 1, "offset": 2, "size": 2, "resolved": true } ] },
+  "_fix_req_clzo": { "size": 5, "resolved": true, "var": false, "source": "fixture", "fields": [
+    { "name": "bOn", "type": "bool",  "count": 1, "offset": 0, "size": 1, "resolved": true },
+    { "name": "fX",  "type": "float", "count": 1, "offset": 1, "size": 4, "resolved": true } ] },
+  "_fix_raw_zocl": { "size": 6, "resolved": false, "var": false, "source": "fixture", "fields": [
+    { "name": "id", "type": "_CLID", "count": 1, "offset": 0, "size": null, "resolved": false } ] },
+  "_fix_arr_zocl": { "size": 20, "resolved": true, "var": false, "source": "fixture", "fields": [
+    { "name": "byList", "type": "uint8_t", "count": 20, "offset": 0, "size": 20, "resolved": true } ] }
+ },
+ "opcodes": [
+  { "main": 9, "sub": 1, "struct": "_fix_a_zocl",       "dir": "zocl", "source": "fixture", "confidence": "medium" },
+  { "main": 9, "sub": 1, "struct": "_fix_b_zocl",       "dir": "zocl", "source": "fixture", "confidence": "medium" },
+  { "main": 9, "sub": 1, "struct": "_fix_var_zocl",     "dir": "zocl", "source": "fixture", "confidence": "medium" },
+  { "main": 9, "sub": 1, "struct": "_fix_req_clzo",     "dir": "clzo", "source": "fixture", "confidence": "high" },
+  { "main": 9, "sub": 2, "struct": "_fix_nest_zocl",    "dir": "zocl", "source": "fixture", "confidence": "high" },
+  { "main": 9, "sub": 3, "struct": "_fix_missing_zocl", "dir": "zocl", "source": "fixture", "confidence": "medium" },
+  { "main": 9, "sub": 4, "struct": "_fix_raw_zocl",     "dir": "zocl", "source": "fixture", "confidence": "medium" }
+ ]
+}

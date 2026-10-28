@@ -1,0 +1,104 @@
+name: CI
+
+# Pull requests: lint and test. Pushes to main (merged PRs): lint, test, then publish the tested
+# Release build as a GitHub release.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    # windows-2022 still has Visual Studio 2022, which the x86 preset's generator names;
+    # windows-latest moved to Visual Studio 2026.
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      # Pinned to the LLVM that Visual Studio 2022 17.14 ships (19.1.5), so CI agrees with the IDE.
+      - name: Install clang-format and clang-tidy
+        run: |
+          pip install clang-format==19.1.5 clang-tidy==19.1.0.1
+          clang-format --version
+          clang-tidy --version
+
+      - name: clang-format
+        run: clang-format --dry-run --Werror (git ls-files 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h')
+
+      - uses: ./.github/actions/vcpkg
+
+      - name: clang-tidy
+        run: |
+          # The dev shell points VCPKG_ROOT at Visual Studio's own vcpkg, so keep the runner's.
+          $vcpkg = $env:VCPKG_ROOT
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          Import-Module "$vs\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x86 -host_arch=x64'
+          # The Visual Studio generator can't write compile_commands.json; Ninja can.
+          cmake -S . -B build-lint -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
+            -DCMAKE_TOOLCHAIN_FILE="$vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x86-windows-static -DVCPKG_HOST_TRIPLET=x86-windows-static
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python .github/scripts/run_clang_tidy.py -p build-lint (git ls-files 'src/*.cpp' 'tests/*.cpp')
+
+  test:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/vcpkg
+
+      - name: Configure
+        run: cmake --preset x86
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      # The ui test needs a window and a D3D11 device, which a headless runner can't be relied on for.
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure --exclude-regex '^ui$'
+
+      - name: Upload build
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: RFTrafficEditor
+          path: |
+            build/Release/RFTrafficEditor.dll
+            build/Release/packet_db.json
+            build/Release/RFTrafficEditor.rules.example.json
+            build/Release/RFTrafficEditor.example.lua
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push'
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: RFTrafficEditor
+          path: dist
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: build-${{ github.run_number }}
+        run: |
+          (cd dist && zip -q "../RFTrafficEditor-$TAG.zip" *)
+          gh release create "$TAG" "RFTrafficEditor-$TAG.zip" dist/RFTrafficEditor.dll \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Build ${{ github.run_number }} (${GITHUB_SHA::7})" --generate-notes

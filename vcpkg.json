@@ -1,0 +1,10 @@
+{
+  "name": "rf-pktnik",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "minhook",
+    "nlohmann-json",
+    { "name": "imgui", "features": ["dx11-binding", "win32-binding"] },
+    { "name": "lua", "features": ["cpp"] }
+  ]
+}

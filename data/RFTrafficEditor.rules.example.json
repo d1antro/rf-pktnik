@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "name": "local chat: hello -> HELLO",
+      "enabled": true,
+      "dir": "C2S", "main": 2,
+      "action": { "findHex": "68 65 6C 6C 6F", "replaceHex": "48 45 4C 4C 4F" }
+    },
+    {
+      "name": "received chat: first letter -> X",
+      "enabled": false,
+      "dir": "S2C", "main": 2, "sub": 10,
+      "match": { "offset": "+0000", "hexPattern": "01" },
+      "action": { "offset": "+001A", "hexReplace": "58" }
+    }
+  ]
+}
